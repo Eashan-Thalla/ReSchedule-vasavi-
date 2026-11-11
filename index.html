@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReSchedule | Intelligent Manufacturing Recovery System</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22%20width=%22100%22%20height=%22100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ========================================================================= -->
+  <!-- PERSISTENT SIDEBAR NAVIGATION (Dark Charcoal / Matte Black)               -->
+  <!-- ========================================================================= -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <a href="#" class="brand-wrapper" data-nav-target="dashboard">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <span class="brand-name">ReSchedule</span>
+          <span class="brand-subtitle">Smart MSME Factory</span>
+        </div>
+      </a>
+      <button class="sidebar-toggle-btn" id="sidebar-toggle" title="Collapse Sidebar">◀</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Main Menu</div>
+      <a class="nav-item active" data-nav-target="dashboard">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a class="nav-item" data-nav-target="jobs">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Job Orders</span>
+      </a>
+      <a class="nav-item" data-nav-target="machines">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Machine Fleet</span>
+      </a>
+      <a class="nav-item" data-nav-target="scheduling">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Gantt Schedule</span>
+      </a>
+
+      <div class="nav-section-title">Disruption & Simulation</div>
+      <a class="nav-item" data-nav-target="simulation">
+        <span class="nav-icon">🔬</span>
+        <span class="nav-label">Simulation Center</span>
+      </a>
+      <a class="nav-item" data-nav-target="disruptions">
+        <span class="nav-icon">⚠️</span>
+        <span class="nav-label">Disruptions</span>
+        <span class="nav-badge" style="background: var(--rose-500); color: #fff;">3</span>
+      </a>
+      <a class="nav-item" data-nav-target="recovery">
+        <span class="nav-icon">🛡️</span>
+        <span class="nav-label">Schedule Recovery</span>
+        <span class="nav-badge">CORE</span>
+      </a>
+
+      <div class="nav-section-title">Analytics & Tools</div>
+      <a class="nav-item" data-nav-target="analytics">
+        <span class="nav-icon">📈</span>
+        <span class="nav-label">Analytics</span>
+      </a>
+      <a class="nav-item" data-nav-target="benchmark">
+        <span class="nav-icon">⚖️</span>
+        <span class="nav-label">Benchmarks</span>
+      </a>
+      <a class="nav-item" data-nav-target="settings">
+        <span class="nav-icon">🛠️</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-weight: 700; color: #cbd5e1; margin-bottom: 2px;">Team Quantum Leapers</div>
+      <div style="font-size: 0.65rem; color: #94a3b8;">Yagna Valkya, Amrutha, Eashan, Konda</div>
+      <div style="font-size: 0.65rem; color: var(--primary-cyan); margin-top: 3px;">Gokaraju Lailavathi Engg College</div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN WORKSPACE WRAPPER                                                    -->
+  <!-- ========================================================================= -->
+  <div class="main-wrapper">
+
+    <!-- Top Header: ReSchedule Production Scheduling & Recovery Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <!-- ReSchedule Logo & System Subtitle -->
+        <div class="header-brand-badge">
+          <div class="header-brand-icon">⚡</div>
+          <div class="header-brand-info">
+            <span class="header-brand-title">ReSchedule</span>
+            <span class="header-brand-subtitle">MSME Disruption Recovery</span>
+          </div>
+        </div>
+
+        <!-- Global Search -->
+        <div class="header-search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input-simple" id="global-search-input" placeholder="Search jobs, machines, disruptions (Press Enter or Ctrl+K)...">
+          <span class="search-shortcut-badge">Ctrl K</span>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Live Floor Telemetry / Simulation Status -->
+        <div class="status-pill-simple">
+          <span class="live-dot" id="header-live-dot"></span>
+          <span style="color: #64748b; font-weight: 600;">Status:</span>
+          <span class="status-val-highlight" id="header-sim-status">Floor Telemetry Live</span>
+        </div>
+
+        <!-- Live Date & Time -->
+        <div class="datetime-pill-simple">
+          <span class="datetime-date" id="header-live-date">11 Nov 2026</span>
+          <span class="datetime-sep">|</span>
+          <span class="datetime-time" id="header-live-time">23:15:00</span>
+        </div>
+
+        <!-- Factory Notifications -->
+        <div class="notif-wrapper">
+          <button class="header-icon-btn" id="notif-btn" title="Factory Notifications">
+            🔔
+            <span class="notif-badge-dot"></span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">
+              <span style="font-weight: 800; color: #1e293b; font-size: 0.85rem;">Factory Notifications</span>
+              <span class="badge badge-rose" style="font-size: 0.65rem;">2 Urgent</span>
+            </div>
+            <div class="notif-list" id="notif-items-list"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content Viewports -->
+    <main class="page-container">
+
+      <!-- ===================================================================== -->
+      <!-- 1. DASHBOARD VIEW (FEATURING HERO TWO-COLUMN CARD LAYOUT)             -->
+      <!-- ===================================================================== -->
+      <section class="page-view active" id="view-dashboard">
+
+        <!-- Page Subtitle & Welcome Banner (Without Theme / GNLEC badge) -->
+        <div style="margin-bottom: 1.25rem;">
+          <h1 style="font-size: 1.45rem; font-weight: 800; color: #1e293b; letter-spacing: -0.02em; display: flex; align-items: center; gap: 0.5rem; margin: 0 0 0.25rem 0;">
+            <span>🏭</span> Shop Floor Overview & Dashboard
+          </h1>
+          <p style="font-size: 0.85rem; color: #64748b; margin: 0;">
+            Welcome back, Team Quantum Leapers · Real-time manufacturing production & disruption recovery
+          </p>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- EXACT HERO SECTION MATCHING REFERENCE IMAGE                         -->
+        <!-- Left: My Account & Balance | Right: Transaction (Production Orders)  -->
+        <!-- =================================================================== -->
+        <div class="hero-dashboard-grid">
+
+          <!-- Left Column: "My Account & Balance" -> Shop Capacity & Balance -->
+          <div class="card account-card-panel">
+            <div class="card-header" style="margin-bottom: 0.5rem;">
+              <div class="card-title" style="font-size: 1.15rem;">Shop Fleet Capacity & Status</div>
+              <span style="color: #94a3b8; font-size: 1.25rem; cursor: pointer;">•••</span>
+            </div>
+
+            <!-- Top Gradient Blue Card ("Total Balance" Style) -->
+            <div class="gradient-balance-card">
+              <div class="gradient-card-top">
+                <div>
+                  <div class="gradient-card-label">Overall Fleet Utilization</div>
+                  <div class="gradient-card-val">87.5<span style="font-size: 1.4rem; font-weight: 600;">%</span></div>
+                  <div style="font-size: 0.75rem; color: rgba(255,255,255,0.85);">On-Time Production Target</div>
+                </div>
+                <div class="gradient-card-icon">
+                  ⚡
+                </div>
+              </div>
+
+              <div class="gradient-card-footer">
+                <div>
+                  <div style="font-size: 0.7rem; opacity: 0.8;">DISRUPTION STATUS</div>
+                  <div style="font-weight: 700;">M-013 Under Repair</div>
+                </div>
+                <div>
+                  <div style="font-size: 0.7rem; opacity: 0.8;">CURRENT SHIFT</div>
+                  <div style="font-weight: 700;">Shift A (08:00 - 20:00)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subcard: "Card Info" -> Workcenter Alpha Info -->
+            <div class="white-subcard">
+              <div class="white-subcard-header">
+                <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Lead Workcenter</span>
+                <span class="pill-priority">👑 Priority Workcenter</span>
+              </div>
+              <div class="white-subcard-body">
+                <div>
+                  <div style="font-size: 1.05rem; font-weight: 800; color: #1e293b;">M-001 Alpha Mill</div>
+                  <div style="font-size: 0.75rem; color: #64748b; font-family: monospace;">5-Axis CNC · 14.5 kW Load</div>
+                </div>
+                <div class="smartchip-icon" title="Telemetry Microcontroller Active"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; padding-top: 0.4rem; border-top: 1px solid #e2e8f0;">
+                <span style="color: #10b981; font-weight: 700; display: flex; align-items: center; gap: 0.35rem;">
+                  <span class="live-dot"></span> Activated & Ready
+                </span>
+                <span style="color: #64748b; font-weight: 600;">ReSchedule Primary Node</span>
+              </div>
+            </div>
+
+            <!-- Two Bottom Blue Buttons ("History" & "Top-up" Style) -->
+            <div class="hero-two-buttons">
+              <button class="btn-hero-action" onclick="App.navigateTo('jobs')">
+                <span>📋</span> Work Orders
+              </button>
+              <button class="btn-hero-action" onclick="App.navigateTo('recovery')">
+                <span>🛡️</span> Quick Recovery
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: "Transaction" -> Active Production Orders -->
+          <div class="card" style="display: flex; flex-direction: column;">
+            <div class="card-header" style="margin-bottom: 0.85rem;">
+              <div>
+                <div class="card-title" style="font-size: 1.15rem;">Active Production Orders</div>
+                <div style="font-size: 0.78rem; color: #64748b; cursor: pointer;">Sort by <strong style="color: #0099ff;">Recently ▾</strong></div>
+              </div>
+
+              <!-- Top Action Buttons ("Print" & "Share" Style) -->
+              <div style="display: flex; gap: 0.65rem;">
+                <button class="btn-pill-blue" onclick="GanttEngine.exportCSV()">
+                  <span>🖨️</span> Print / Export
+                </button>
+                <button class="btn-pill-blue" onclick="showToast('Production schedule link copied to clipboard', 'success')">
+                  <span>↗️</span> Share Status
+                </button>
+              </div>
+            </div>
+
+            <!-- THE SIGNATURE CYAN-BLUE ROUNDED TABLE HEADER ROW FROM REFERENCE IMAGE -->
+            <div class="table-wrapper" style="flex: 1;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Job Order / Purpose</th>
+                    <th>Date / Timeline</th>
+                    <th>Workcenter / Duration</th>
+                    <th>Result / Status</th>
+                  </tr>
+                </thead>
+                <tbody id="hero-transactions-table-body">
+                  <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #1e293b;">JOB-001 Automotive Bracket</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">Rough Milling & Boring</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #1e293b;">Today</div>
+                      <div style="font-size: 0.72rem; color: #94a3b8;">04:00 PM Target</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #0099ff;">M-001 Alpha</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">45m Op Duration</div>
+                    </td>
+                    <td>
+                      <span class="status-done-pill">✔ In Progress (68%)</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #1e293b;">JOB-006 Copper Busbar Sets</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">Laser Cut & Compound Bend</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #1e293b;">Today</div>
+                      <div style="font-size: 0.72rem; color: #94a3b8;">Finished 01:00 PM</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #0099ff;">M-010 Laser</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">55m Total Batch</div>
+                    </td>
+                    <td>
+                      <span class="status-done-pill" style="color: #10b981;">✔ Done (100%)</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #1e293b;">JOB-002 Planetary Gear Housing</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">5-Axis Cavity Milling</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #1e293b;">Today</div>
+                      <div style="font-size: 0.72rem; color: #94a3b8;">03:00 PM Target</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #0099ff;">M-003 Gamma</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">50m Duration</div>
+                    </td>
+                    <td>
+                      <span class="status-done-pill">✔ In Progress (55%)</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #1e293b;">JOB-004 Aerospace Enclosure</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">TIG Seam Welding</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #1e293b;">Today</div>
+                      <div style="font-size: 0.72rem; color: #94a3b8;">02:30 PM Target</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #0099ff;">M-012 Welder</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">30m Duration</div>
+                    </td>
+                    <td>
+                      <span class="status-done-pill">✔ In Progress (80%)</span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <div style="font-weight: 800; color: #1e293b;">JOB-007 Multi-Cavity Injection Die</div>
+                      <div style="font-size: 0.72rem; color: #ef4444;">Spindle Failure Blocked</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #1e293b;">Tomorrow</div>
+                      <div style="font-size: 0.72rem; color: #ef4444;">Requires Recovery</div>
+                    </td>
+                    <td>
+                      <div style="font-weight: 700; color: #ef4444;">M-013 EDM (Down)</div>
+                      <div style="font-size: 0.72rem; color: #64748b;">Re-route to M-001</div>
+                    </td>
+                    <td>
+                      <span class="badge badge-rose">🚨 Delayed (Needs Recovery)</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- "Show All My Transactions ⌵" Style Link -->
+            <div style="text-align: center; margin-top: 1rem; padding-top: 0.5rem;">
+              <a href="#" onclick="App.navigateTo('jobs'); return false;" style="color: #0099ff; font-weight: 700; text-decoration: none; font-size: 0.85rem;">
+                Show All 10 Production Jobs ⌵
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8 KPI Cards Grid -->
+        <div class="grid-cards-4">
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Total Shop Jobs</span>
+                <div class="kpi-value" id="kpi-total-jobs">10</div>
+                <div class="kpi-subtext"><span style="color: #10b981; font-weight: 700;">▲ +2</span> released this shift</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #e0f2fe; color: #0099ff;">📋</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Completed Jobs</span>
+                <div class="kpi-value" style="color: #10b981;">1</div>
+                <div class="kpi-subtext"><span style="color: #10b981; font-weight: 700;">100%</span> QC passed (JOB-006)</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #dcfce7; color: #10b981;">✅</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Pending In Queue</span>
+                <div class="kpi-value" style="color: #f59e0b;">3</div>
+                <div class="kpi-subtext">Waiting machine allotment</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #fef3c7; color: #f59e0b;">⏳</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Delayed Jobs</span>
+                <div class="kpi-value" style="color: #ef4444;">2</div>
+                <div class="kpi-subtext"><span style="color: #ef4444; font-weight: 700;">● Requires</span> ReSchedule action</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #fee2e2; color: #ef4444;">🚨</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Available Machines</span>
+                <div class="kpi-value" style="color: #10b981;">5 <span style="font-size: 1rem; color: #94a3b8;">/ 13</span></div>
+                <div class="kpi-subtext">Ready for dynamic allocation</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #dcfce7; color: #10b981;">⚙️</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Under Breakdown</span>
+                <div class="kpi-value" style="color: #ef4444;">1</div>
+                <div class="kpi-subtext">M-013 Wire EDM Spindle</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #fee2e2; color: #ef4444;">🛠️</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">On-Time Delivery</span>
+                <div class="kpi-value" style="color: #0099ff;">87.5%</div>
+                <div class="kpi-subtext"><span style="color: #10b981; font-weight: 700;">▲ +4.2%</span> vs MSME benchmark</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #e0f2fe; color: #0099ff;">📈</div>
+            </div>
+          </div>
+
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <div>
+                <span class="kpi-label">Fleet Utilization</span>
+                <div class="kpi-value" style="color: #8b5cf6;">72.8%</div>
+                <div class="kpi-subtext">Target: 75% nominal load</div>
+              </div>
+              <div class="kpi-icon-wrap" style="background: #f3e8ff; color: #8b5cf6;">⚡</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 Visualizations Grid (Production Completion & Energy Curve) -->
+        <div class="grid-cards-2">
+          <!-- Production Completion -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title"><span>📦</span> Production Completion</div>
+                <div class="card-subtitle">Daily planned vs actual completed job lots</div>
+              </div>
+              <span class="badge badge-cyan">This Week</span>
+            </div>
+            <canvas id="chart-production" style="width: 100%; height: 230px;"></canvas>
+          </div>
+
+          <!-- Energy Demand Area -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title"><span>⚡</span> Shop Hourly Power Demand (kW)</div>
+                <div class="card-subtitle">Energy consumption curve (Base tariff ₹8.50/kWh)</div>
+              </div>
+              <span class="badge badge-cyan">Peak Load Monitored</span>
+            </div>
+            <canvas id="chart-energy" style="width: 100%; height: 230px;"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 2. JOB MANAGEMENT VIEW                                                -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-jobs">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>📋</span> Production Job Management</h1>
+            <p>Configure manufacturing work orders, operation sequences, precedence, and material availability</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="App.openAddJobModal()">
+              <span>➕</span> Add New Job
+            </button>
+          </div>
+        </div>
+
+        <!-- Search & Filter Controls Bar -->
+        <div class="card" style="margin-bottom: 1.25rem; padding: 1rem;">
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+            <div style="flex: 1; min-width: 240px;">
+              <input type="text" class="form-input" id="job-search-input" placeholder="Search by Job ID, name, or product..." oninput="App.renderJobsTable()">
+            </div>
+            <div>
+              <select class="form-select" id="job-status-filter" onchange="App.renderJobsTable()">
+                <option value="all">All Statuses</option>
+                <option value="in-progress">In Progress</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="delayed">Delayed</option>
+              </select>
+            </div>
+            <div>
+              <select class="form-select" id="job-priority-filter" onchange="App.renderJobsTable()">
+                <option value="all">All Priorities</option>
+                <option value="urgent">Urgent Priority</option>
+                <option value="high">High Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="low">Low Priority</option>
+              </select>
+            </div>
+            <div>
+              <select class="form-select" id="job-sort-by" onchange="App.renderJobsTable()">
+                <option value="dueDate">Sort: Due Date</option>
+                <option value="priority">Sort: Priority</option>
+                <option value="progress">Sort: Progress %</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jobs Table -->
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Job ID</th>
+                  <th>Job Name & Product</th>
+                  <th>Priority</th>
+                  <th>Arrival Time</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Progress</th>
+                  <th>Operations</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-table-body">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 3. MACHINE MANAGEMENT VIEW                                            -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-machines">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>⚙️</span> Machine Fleet Management</h1>
+            <p>Monitor shop floor work centers, configure tooling speeds, energy ratings, and maintenance windows</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" onclick="showToast('Machine configuration modal opened', 'info')">
+              <span>➕</span> Add New Workcenter
+            </button>
+          </div>
+        </div>
+
+        <!-- Status Filter Pills -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm machine-filter-pill" onclick="App.setMachineFilter('all', this)">All Workcenters (13)</button>
+          <button class="btn btn-secondary btn-sm machine-filter-pill" onclick="App.setMachineFilter('processing', this)">Processing (6)</button>
+          <button class="btn btn-secondary btn-sm machine-filter-pill" onclick="App.setMachineFilter('available', this)">Available (4)</button>
+          <button class="btn btn-secondary btn-sm machine-filter-pill" onclick="App.setMachineFilter('idle', this)">Idle (2)</button>
+          <button class="btn btn-secondary btn-sm machine-filter-pill" onclick="App.setMachineFilter('maintenance', this)">Maintenance (1)</button>
+          <button class="btn btn-secondary btn-sm machine-filter-pill" onclick="App.setMachineFilter('breakdown', this)">Breakdown (1)</button>
+        </div>
+
+        <!-- Machine Cards Grid -->
+        <div class="floor-grid" id="machines-grid-container">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 4. PRODUCTION SCHEDULING VIEW (GANTT CHART)                           -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-scheduling">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>📅</span> Production Scheduling & Gantt Timeline</h1>
+            <p>Interactive schedule Gantt chart across 13 machines, changeovers, idle periods, and deadlines</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary" id="btn-export-schedule"><span>📥</span> Export Schedule (CSV)</button>
+            <button class="btn btn-primary" id="btn-generate-schedule" onclick="GanttEngine.setAlgorithm(GanttEngine.currentAlgorithm)">
+              <span>⚡</span> Generate Schedule
+            </button>
+          </div>
+        </div>
+
+        <!-- Scheduling Algorithm Selection & Controls -->
+        <div class="card" style="margin-bottom: 1.25rem; padding: 1.2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin-right: 0.5rem;">ALGORITHM:</span>
+              <button class="btn btn-secondary btn-sm" onclick="GanttEngine.setAlgorithm('FCFS')">FCFS</button>
+              <button class="btn btn-secondary btn-sm" onclick="GanttEngine.setAlgorithm('EDD')">EDD</button>
+              <button class="btn btn-secondary btn-sm" onclick="GanttEngine.setAlgorithm('CP-SAT')">CP-SAT (Solver)</button>
+              <button class="btn btn-primary btn-sm" onclick="GanttEngine.setAlgorithm('ReSchedule')">
+                ⭐ ReSchedule (Proposed Intelligent)
+              </button>
+            </div>
+
+            <!-- Zoom & Filters -->
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+              <div style="display: flex; gap: 0.35rem;">
+                <button class="btn btn-primary btn-sm" data-gantt-zoom="4">4 Hours</button>
+                <button class="btn btn-secondary btn-sm" data-gantt-zoom="8">8 Hours</button>
+                <button class="btn btn-secondary btn-sm" data-gantt-zoom="12">Full Shift</button>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; font-size: 0.75rem; color: #475569; font-weight: 600;">
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" id="toggle-gantt-changeover" checked> Show Changeovers
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
+                  <input type="checkbox" id="toggle-gantt-breakdown" checked> Show Breakdowns
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gantt Summary KPI Row -->
+        <div class="grid-cards-4" style="margin-bottom: 1.25rem;">
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Total Makespan</span>
+            <div class="kpi-value" id="kpi-sched-makespan" style="font-size: 1.4rem;">205 min</div>
+            <div class="kpi-subtext">Est. completion: <span id="kpi-sched-completion" style="font-weight: 700; color: #0099ff;">03:25 PM</span></div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Fleet Utilization</span>
+            <div class="kpi-value" id="kpi-sched-util" style="font-size: 1.4rem; color: #0099ff;">82.6%</div>
+            <div class="kpi-subtext">Optimized tooling load</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Total Changeover Time</span>
+            <div class="kpi-value" id="kpi-sched-changeover" style="font-size: 1.4rem; color: #f59e0b;">22 min</div>
+            <div class="kpi-subtext"><span style="color: #10b981; font-weight: 700;">-35%</span> reduction vs FCFS</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Expected Energy Cost</span>
+            <div class="kpi-value" id="kpi-sched-energy" style="font-size: 1.4rem; color: #10b981;">₹965</div>
+            <div class="kpi-subtext">On-Time: <strong id="kpi-sched-ontime" style="color: #0099ff;">94.8%</strong></div>
+          </div>
+        </div>
+
+        <!-- Gantt Chart Container -->
+        <div class="gantt-chart-container" id="gantt-chart-wrapper">
+          <!-- Dynamically generated by GanttEngine -->
+        </div>
+
+        <!-- Gantt Legend -->
+        <div class="card" style="margin-top: 1rem; padding: 1rem 1.4rem;">
+          <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center; font-size: 0.75rem; color: #64748b;">
+            <strong style="color: #1e293b;">Legend:</strong>
+            <span style="display: flex; align-items: center; gap: 0.35rem;"><span style="width: 14px; height: 10px; background: #0099ff; border-radius: 2px;"></span> Processing Jobs</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem;"><span style="width: 14px; height: 10px; background: repeating-linear-gradient(45deg, #64748b, #64748b 4px, #475569 4px, #475569 8px); border-radius: 2px;"></span> Changeover Period</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem;"><span style="width: 14px; height: 10px; background: repeating-linear-gradient(45deg, #dc2626, #dc2626 4px, #b91c1c 4px, #b91c1c 8px); border-radius: 2px;"></span> Machine Breakdown</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem;"><span style="width: 14px; height: 10px; background: repeating-linear-gradient(45deg, #8b5cf6, #8b5cf6 4px, #7c3aed 4px, #7c3aed 8px); border-radius: 2px;"></span> Maintenance Window</span>
+            <span style="display: flex; align-items: center; gap: 0.35rem;"><span style="width: 14px; height: 10px; border: 2px solid #ef4444; border-radius: 2px;"></span> Delayed Operation</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 5. SIMULATION CENTER VIEW                                             -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-simulation">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>🔬</span> Discrete-Event Simulation Center</h1>
+            <p>Simulate job releases, operation state transitions, unexpected machine failures, and real-time repair events</p>
+          </div>
+          <div class="page-actions">
+            <span class="badge badge-gray" id="sim-status-badge">Simulation Idle</span>
+          </div>
+        </div>
+
+        <!-- Simulation Clock & Controls Bar -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
+            <!-- Big Clock Display -->
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div style="padding: 0.75rem 1.4rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); text-align: center;">
+                <div style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700;">Virtual Sim Clock</div>
+                <div style="font-size: 1.85rem; font-weight: 800; color: #0099ff; font-family: monospace;" id="sim-clock-time">08:00 AM</div>
+                <div style="font-size: 0.72rem; color: #64748b;" id="sim-clock-minutes">+0 min</div>
+              </div>
+
+              <!-- Buttons -->
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn btn-success" id="btn-sim-start"><span>▶️</span> Start</button>
+                <button class="btn btn-secondary" id="btn-sim-pause" disabled><span>⏸️</span> Pause</button>
+                <button class="btn btn-secondary" id="btn-sim-reset"><span>🔄</span> Reset</button>
+              </div>
+            </div>
+
+            <!-- Speed selector -->
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 0.78rem; font-weight: 700; color: #64748b;">SPEED:</span>
+              <button class="btn btn-primary btn-sm" data-sim-speed="1">1x</button>
+              <button class="btn btn-secondary btn-sm" data-sim-speed="2">2x</button>
+              <button class="btn btn-secondary btn-sm" data-sim-speed="5">5x</button>
+              <button class="btn btn-secondary btn-sm" data-sim-speed="10">10x Fast</button>
+            </div>
+          </div>
+
+          <!-- Shift Progress Bar -->
+          <div style="margin-top: 1rem;">
+            <div class="progress-bar-bg" style="height: 7px;">
+              <div class="progress-bar-fill" id="sim-progress-bar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Factory Floor Visualizer & Event Log -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem;">
+          <div>
+            <div class="card-title" style="margin-bottom: 0.75rem;"><span>🏭</span> Live Factory Floor Workcenters</div>
+            <div class="floor-grid" id="sim-floor-grid">
+              <!-- Dynamically populated by SimulationEngine -->
+            </div>
+          </div>
+
+          <!-- Event Log & Queue Side Panel -->
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Upcoming Event Queue -->
+            <div class="card">
+              <div class="card-header" style="margin-bottom: 0.5rem;">
+                <div class="card-title" style="font-size: 0.9rem;"><span>⏳</span> Upcoming Event Queue</div>
+                <span class="badge badge-cyan">FIFO</span>
+              </div>
+              <div id="sim-event-queue" style="max-height: 180px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- Live Event Log -->
+            <div class="card" style="flex: 1;">
+              <div class="card-header" style="margin-bottom: 0.5rem;">
+                <div class="card-title" style="font-size: 0.9rem;"><span>📜</span> Simulation Event Log</div>
+                <span class="badge badge-emerald">Live Stream</span>
+              </div>
+              <div id="sim-event-log" style="max-height: 380px; overflow-y: auto;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 6. DISRUPTION MANAGEMENT VIEW                                         -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-disruptions">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>⚠️</span> Disruption Management & Trigger Center</h1>
+            <p>Manually simulate unpredictable industrial shop disruptions: machine breakdowns, urgent rush orders, and material delays</p>
+          </div>
+        </div>
+
+        <!-- 4 Manual Disruption Trigger Panels -->
+        <div class="grid-cards-4" style="margin-bottom: 1.5rem;">
+          <!-- Machine Breakdown Trigger -->
+          <div class="card">
+            <div class="card-title" style="color: #ef4444; margin-bottom: 0.5rem;"><span>🚨</span> Machine Breakdown</div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">Simulate catastrophic tool spindle failure or mechanical jamming.</p>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">Select Workcenter</label>
+              <select class="form-select" id="trigger-breakdown-machine">
+                <option value="M-013">M-013 Wire EDM</option>
+                <option value="M-001">M-001 5-Axis Mill</option>
+                <option value="M-006">M-006 CNC Lathe</option>
+                <option value="M-010">M-010 Laser Cutter</option>
+              </select>
+            </div>
+            <button class="btn btn-danger btn-sm" style="width: 100%;" onclick="App.triggerManualDisruption('breakdown')">
+              Trigger Breakdown
+            </button>
+          </div>
+
+          <!-- Rush Order Trigger -->
+          <div class="card">
+            <div class="card-title" style="color: #f59e0b; margin-bottom: 0.5rem;"><span>⚡</span> Urgent Rush Order</div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">Inject emergency customer order requiring immediate shop scheduling.</p>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">Order Priority</label>
+              <select class="form-select">
+                <option>AOG Aerospace Top Priority</option>
+                <option>Defense Urgent Spares</option>
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" style="width: 100%;" onclick="App.triggerManualDisruption('rush-order')">
+              Inject Rush Order
+            </button>
+          </div>
+
+          <!-- Late Material Arrival -->
+          <div class="card">
+            <div class="card-title" style="color: #8b5cf6; margin-bottom: 0.5rem;"><span>🚚</span> Material Delay</div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">Simulate logistics delay of raw stock shipments.</p>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">Delayed Lot</label>
+              <select class="form-select">
+                <option>P20 Tool Steel (+180m)</option>
+                <option>Ti-6Al-4V Aerospace (+90m)</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="App.triggerManualDisruption('material-delay')">
+              Trigger Material Delay
+            </button>
+          </div>
+
+          <!-- Emergency Maintenance -->
+          <div class="card">
+            <div class="card-title" style="color: #0099ff; margin-bottom: 0.5rem;"><span>🔧</span> Urgent Maintenance</div>
+            <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem;">Take machine offline for coolant flushing or recalibration.</p>
+            <div class="form-group" style="margin-bottom: 0.75rem;">
+              <label class="form-label">Target Machine</label>
+              <select class="form-select">
+                <option>M-008 Cylindrical Grinder</option>
+                <option>M-003 Vertical Mill</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="width: 100%;" onclick="showToast('Maintenance window booked', 'info')">
+              Schedule Maintenance
+            </button>
+          </div>
+        </div>
+
+        <!-- Active Disruptions List -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem;">
+          <div>
+            <div class="card-title" style="margin-bottom: 0.75rem;"><span>🚨</span> Active Unresolved Disruptions</div>
+            <div id="disruptions-active-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <div>
+            <div class="card-title" style="margin-bottom: 0.75rem;"><span>📜</span> Disruption History Timeline</div>
+            <div class="card" id="disruptions-history-list" style="padding: 0;">
+              <!-- History timeline items -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 7. SCHEDULE RECOVERY VIEW (CORE INNOVATION)                           -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-recovery">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>🛡️</span> Intelligent Disruption Recovery (ReSchedule)</h1>
+            <p>Proposed disruption recovery engine: re-routes affected operations while preserving schedule stability</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary btn-lg" id="btn-repair-schedule">
+              <span>🛡️</span> REPAIR PRODUCTION SCHEDULE
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Disruption Impact Summary Banner -->
+        <div class="card" style="margin-bottom: 1.25rem; border: 1.5px solid #0099ff; background: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 6px;">
+                <span class="badge badge-rose">CRITICAL DISRUPTION DETECTED</span>
+                <span style="font-size: 0.82rem; color: #1e293b; font-weight: 700;" id="rec-disruption-title">M-013 Wire EDM Spindle Breakdown</span>
+              </div>
+              <p style="font-size: 0.85rem; color: #475569; max-width: 650px;" id="rec-disruption-desc">
+                High-voltage spindle generator overheated. Operation OP-702 (JOB-007) stalled.
+              </p>
+              <div style="display: flex; gap: 1.5rem; margin-top: 0.75rem; font-size: 0.78rem;">
+                <div>Affected Machine: <span id="rec-affected-machines"><span class="badge badge-rose">M-013</span></span></div>
+                <div>Affected Job: <span id="rec-affected-jobs"><span class="badge badge-amber">JOB-007</span></span></div>
+                <div>Unaffected Jobs: <span class="badge badge-emerald">8 Jobs Preserved (92% Stability)</span></div>
+              </div>
+            </div>
+
+            <div style="text-align: right;">
+              <div style="font-size: 0.72rem; color: #ef4444; font-weight: 700; text-transform: uppercase;">Estimated Disruption Loss</div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: #ef4444;" id="rec-estimated-loss">Est. Delay: +180 min</div>
+              <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Backend Status: <strong style="color: #0099ff;">Ready for Optimization</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8-Step Recovery Workflow Visualizer -->
+        <div class="card" style="margin-bottom: 1.25rem;">
+          <div class="card-header">
+            <div>
+              <div class="card-title"><span>⚙️</span> ReSchedule 8-Stage Rescheduling Protocol</div>
+              <div class="card-subtitle">Algorithmic workflow executed during schedule recovery</div>
+            </div>
+            <span class="badge badge-cyan" id="rec-workflow-status">Standing By for Execution</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.5rem;" id="rec-step-list">
+            <div class="badge badge-gray" id="rec-step-1" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">1. Detect & Isolate Disruption</div>
+            <div class="badge badge-gray" id="rec-step-2" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">2. Identify Affected Downstream Ops</div>
+            <div class="badge badge-gray" id="rec-step-3" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">3. Analyze Alternative Machine Fleet</div>
+            <div class="badge badge-gray" id="rec-step-4" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">4. Preserve Unaffected Assignments</div>
+            <div class="badge badge-gray" id="rec-step-5" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">5. Optimize Sequence via Heuristic</div>
+            <div class="badge badge-gray" id="rec-step-6" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">6. Minimize Changeover Penalties</div>
+            <div class="badge badge-gray" id="rec-step-7" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">7. Validate Precedence Constraints</div>
+            <div class="badge badge-gray" id="rec-step-8" style="justify-content: flex-start; padding: 0.6rem 0.85rem;">8. Synthesize Repaired Schedule</div>
+          </div>
+        </div>
+
+        <!-- Recovery KPIs Row (Revealed after repair) -->
+        <div class="grid-cards-4" id="rec-kpis-container" style="display: none; margin-bottom: 1.25rem;">
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Computation Time</span>
+            <div class="kpi-value" id="rec-kpi-time" style="font-size: 1.4rem; color: #0099ff;">2.34s</div>
+            <div class="kpi-subtext">Real-time recovery speed</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Rescheduled Operations</span>
+            <div class="kpi-value" id="rec-kpi-rescheduled" style="font-size: 1.4rem; color: #8b5cf6;">3 Jobs</div>
+            <div class="kpi-subtext"><span id="rec-kpi-changed">2 Re-allocated</span></div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Changeover & Energy Impact</span>
+            <div class="kpi-value" id="rec-kpi-energy" style="font-size: 1.4rem; color: #f59e0b;">+₹45</div>
+            <div class="kpi-subtext"><span id="rec-kpi-changeover">+8 min</span> tooling setup</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">Predicted Delivery & Stability</span>
+            <div class="kpi-value" id="rec-kpi-ontime" style="font-size: 1.4rem; color: #10b981;">94.2%</div>
+            <div class="kpi-subtext"><span id="rec-kpi-stability">91.5% Stability</span></div>
+          </div>
+        </div>
+
+        <!-- Before-and-After Gantt Charts -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Top: Disrupted Schedule -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title" style="color: #ef4444;">
+                <span>❌</span> 1. Disrupted Schedule (M-013 Stalled, Downstream Deadlines Compromised)
+              </div>
+              <span class="badge badge-rose">Original Disrupted Trace</span>
+            </div>
+            <div class="gantt-chart-container" id="rec-gantt-before"></div>
+          </div>
+
+          <!-- Bottom: Repaired Schedule (Generated by ReSchedule) -->
+          <div class="card" id="rec-after-wrapper" style="display: none; border-color: #0099ff;">
+            <div class="card-header">
+              <div class="card-title" style="color: #0099ff;">
+                <span>✅</span> 2. Repaired Schedule (ReSchedule: JOB-007 re-routed to M-001/M-003, Deadlines Recovered)
+              </div>
+              <span class="badge badge-cyan">Optimized Recovery Trace</span>
+            </div>
+            <div class="gantt-chart-container" id="rec-gantt-after"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 8. PERFORMANCE ANALYTICS VIEW                                         -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-analytics">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>📈</span> Shop Performance Analytics</h1>
+            <p>10 key manufacturing performance metrics evaluated across production shifts</p>
+          </div>
+          <div class="page-actions">
+            <select class="form-select btn-sm">
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+              <option>Current Shift</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 10 Metric Cards -->
+        <div class="grid-cards-4" style="margin-bottom: 1.5rem;">
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">1. On-Time Delivery</span>
+            <div class="kpi-value" id="kpi-an-ontime" style="color: #0099ff;">91.4%</div>
+            <div class="kpi-subtext">MSME Target 85%</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">2. Throughput Rate</span>
+            <div class="kpi-value" id="kpi-an-throughput">4.4 jobs/h</div>
+            <div class="kpi-subtext">Peak shift output</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">3. Changeover Loss</span>
+            <div class="kpi-value" id="kpi-an-changeover" style="color: #f59e0b;">2.6 hrs</div>
+            <div class="kpi-subtext">Minimized tool travel</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">4. Energy Cost</span>
+            <div class="kpi-value" id="kpi-an-energy">₹1,045</div>
+            <div class="kpi-subtext">Shift electricity draw</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">5. Recovery Time</span>
+            <div class="kpi-value" id="kpi-an-recovery" style="color: #10b981;">2.34s</div>
+            <div class="kpi-subtext">Automated algorithmic speed</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">6. Fleet Utilization</span>
+            <div class="kpi-value" id="kpi-an-util">72.8%</div>
+            <div class="kpi-subtext">13 Workcenters active</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">7. Average Tardiness</span>
+            <div class="kpi-value" id="kpi-an-tardiness" style="color: #10b981;">14.2 min</div>
+            <div class="kpi-subtext">-62% vs FCFS heuristic</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">8. Total Makespan</span>
+            <div class="kpi-value" id="kpi-an-makespan">220 min</div>
+            <div class="kpi-subtext">Batch completion time</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">9. Stability Index</span>
+            <div class="kpi-value" id="kpi-an-stability" style="color: #0099ff;">89.2%</div>
+            <div class="kpi-subtext">Schedule preservation</div>
+          </div>
+          <div class="card kpi-card" style="padding: 1.1rem;">
+            <span class="kpi-label">10. Total Downtime</span>
+            <div class="kpi-value" id="kpi-an-downtime" style="color: #ef4444;">3.5 hrs</div>
+            <div class="kpi-subtext">M-013 breakdown & M-008 maintenance</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 9. BENCHMARK COMPARISON VIEW                                          -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-benchmark">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>⚖️</span> Scheduling Algorithm Benchmark</h1>
+            <p>Comparative evaluation: FCFS vs EDD vs Google OR-Tools CP-SAT vs Proposed ReSchedule Scheduler</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-secondary" onclick="App.exportBenchmarkReport()"><span>📥</span> Export Report (CSV)</button>
+            <button class="btn btn-primary" id="btn-run-benchmark" onclick="App.runBenchmarkSimulation()">
+              <span>▶️</span> Run Benchmark Experiments
+            </button>
+          </div>
+        </div>
+
+        <!-- Comparative Charts Grid -->
+        <div class="grid-cards-2">
+          <!-- Grouped Bar Chart -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><span>📊</span> Multi-Metric Benchmark Comparison</div>
+              <span class="badge badge-cyan">50 Simulation Runs</span>
+            </div>
+            <canvas id="chart-benchmark" style="width: 100%; height: 260px;"></canvas>
+          </div>
+
+          <!-- Pareto Frontier Visualization -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title"><span>🎯</span> Pareto Frontier Multi-Objective Tradeoff</div>
+                <div class="card-subtitle">On-Time Delivery (%) vs Energy Cost (₹) Tradeoff</div>
+              </div>
+              <span class="badge badge-emerald">ReSchedule Optimal Dominance</span>
+            </div>
+            <canvas id="chart-pareto" style="width: 100%; height: 260px;"></canvas>
+          </div>
+        </div>
+
+        <!-- Detailed Comparison Table (with Signature Blue Header) -->
+        <div class="card" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <div class="card-title"><span>📋</span> Quantitative Evaluation Matrix</div>
+            <span class="badge badge-gray">Illustrative Sample Benchmark Dataset</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Performance Metric</th>
+                  <th>FCFS (First-Come)</th>
+                  <th>EDD (Due Date)</th>
+                  <th>CP-SAT (Solver)</th>
+                  <th style="color: #ffffff; background: #0077e6;">ReSchedule (Proposed)</th>
+                  <th>ReSchedule Gain vs CP-SAT</th>
+                </tr>
+              </thead>
+              <tbody id="benchmark-table-body">
+                <!-- Dynamically filled -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================== -->
+      <!-- 10. SETTINGS VIEW                                                     -->
+      <!-- ===================================================================== -->
+      <section class="page-view" id="view-settings">
+        <div class="page-header">
+          <div class="page-title-group">
+            <h1><span>🛠️</span> System Settings & Factory Configuration</h1>
+            <p>Customize operating shifts, electricity tariff models, recovery time budgets, and team attribution</p>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+          <div class="card">
+            <form onsubmit="App.saveSettings(event)">
+              <div class="card-title" style="margin-bottom: 1.25rem;"><span>🏭</span> Factory Parameters</div>
+
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="form-label">Job Shop Facility Name</label>
+                <input type="text" class="form-input" id="set-factory-name" value="Quantum Precision Job Shop Works">
+              </div>
+
+              <div class="form-grid-2" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label class="form-label">Shift Start Time</label>
+                  <input type="text" class="form-input" id="set-hours-start" value="08:00 AM">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Shift End Time</label>
+                  <input type="text" class="form-input" id="set-hours-end" value="08:00 PM">
+                </div>
+              </div>
+
+              <div class="form-grid-2" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                  <label class="form-label">Base Electricity Tariff (₹/kWh)</label>
+                  <input type="number" step="0.1" class="form-input" id="set-tariff" value="8.50">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Recovery Computation Budget (seconds)</label>
+                  <input type="number" class="form-input" value="5">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label class="form-label">Default Production Scheduling Algorithm</label>
+                <select class="form-select">
+                  <option selected>ReSchedule (Intelligent Disruption Recovery)</option>
+                  <option>CP-SAT (Google OR-Tools)</option>
+                  <option>EDD (Earliest Due Date)</option>
+                  <option>FCFS (First Come First Served)</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-primary">
+                Save System Settings
+              </button>
+            </form>
+          </div>
+
+          <!-- Project & Team Attribution Card -->
+          <div class="card" style="background: #ffffff; border: 1.5px solid #0099ff;">
+            <div class="card-title" style="color: #0099ff; margin-bottom: 0.75rem;">
+              <span>🏆</span> Project Information
+            </div>
+            
+            <div style="font-size: 0.95rem; color: #1e293b; font-weight: 800;">ReSchedule</div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-bottom: 1rem;">Disruption-Recovery Production Scheduling for MSME Job Shops</div>
+
+            <div style="font-size: 0.72rem; margin-bottom: 0.35rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">TEAM:</div>
+            <div style="font-weight: 800; color: #0099ff; margin-bottom: 0.75rem;">Quantum Leapers</div>
+
+            <div style="font-size: 0.72rem; margin-bottom: 0.35rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">MEMBERS:</div>
+            <ul style="list-style: none; padding-left: 0; font-size: 0.82rem; color: #334155; line-height: 1.7; margin-bottom: 1rem; font-weight: 600;">
+              <li>• Yagna Valkya</li>
+              <li>• Amrutha</li>
+              <li>• Eashan</li>
+              <li>• Konda</li>
+            </ul>
+
+            <div style="font-size: 0.72rem; margin-bottom: 0.35rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">INSTITUTION:</div>
+            <div style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.85rem;">
+              Gokaraju Lailavathi Engineering College
+            </div>
+
+            <div style="font-size: 0.72rem; margin-bottom: 0.35rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">THEME:</div>
+            <span class="badge badge-cyan" style="font-size: 0.8rem; padding: 0.3rem 0.75rem;">Smart Automation</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODALS                                                                    -->
+<!-- ========================================================================= -->
+
+<!-- 1. Add / Edit Job Modal -->
+<div class="modal-backdrop" id="modal-job">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-job-title">Add New Production Job</h3>
+      <button class="modal-close-btn" onclick="App.closeModal('modal-job')">✕</button>
+    </div>
+    <form onsubmit="App.saveJobForm(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Job Name / Work Description</label>
+          <input type="text" class="form-input" id="form-job-name" required placeholder="e.g., Planetary Gearbox Housing">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Product / Material Type</label>
+            <input type="text" class="form-input" id="form-job-product" placeholder="e.g., Ti-6Al-4V Aerospace Alloy">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority Level</label>
+            <select class="form-select" id="form-job-priority">
+              <option value="urgent">Urgent</option>
+              <option value="high" selected>High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Target Due Date / Completion Target</label>
+          <input type="text" class="form-input" id="form-job-due" placeholder="Today 05:00 PM">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sequential Operations (Comma-separated name and minutes)</label>
+          <input type="text" class="form-input" id="form-job-ops" placeholder="Milling (45m), Drilling (30m), Polishing (20m)">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-job')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Job to Schedule</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Machine Details Modal -->
+<div class="modal-backdrop" id="modal-machine-details">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-machine-title">Workcenter Details</h3>
+      <button class="modal-close-btn" onclick="App.closeModal('modal-machine-details')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-machine-details-body">
+      <!-- Populated dynamically -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-machine-details')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Gantt Tooltip -->
+<div id="gantt-tooltip"></div>
+
+<!-- JavaScript Engine Modules -->
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/gantt.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/recovery.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
