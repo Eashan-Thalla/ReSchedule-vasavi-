@@ -127,3 +127,4 @@ uvicorn backend_api:app --reload --port 8000
 **Theme:** Smart Automation  
 **Project:** ReSchedule | Intelligent Manufacturing Production Scheduling & Recovery System
 
+Vasavi Hack
