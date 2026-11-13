@@ -51,6 +51,15 @@ class RecoveryRequest(BaseModel):
     preserveStability: bool = True
     timeBudgetSeconds: int = 5
 
+class ResourceScheduleRequest(BaseModel):
+    numWorkers: int = 10
+    numMachines: int = 13
+
+class DisruptionRescheduleRequest(BaseModel):
+    absentWorkers: List[str] = []
+    brokenMachines: List[str] = []
+    reason: Optional[str] = "Shop floor resource disruption"
+
 @app.get("/")
 def root():
     return {
@@ -81,6 +90,41 @@ def get_schedule(algorithm: str = "ReSchedule"):
         "changeover_time_minutes": 22,
         "energy_cost_inr": 965.0,
         "on_time_delivery_pct": 94.8
+    }
+
+@app.post("/api/schedule/generate")
+def generate_schedule(req: ResourceScheduleRequest):
+    """
+    Generates baseline production schedule constrained by available workers and machines.
+    """
+    m_count = min(13, max(1, req.numMachines))
+    w_count = max(1, req.numWorkers)
+    makespan = 205 + max(0, 10 - w_count) * 8 + (13 - m_count) * 6
+    return {
+        "status": "success",
+        "numWorkers": w_count,
+        "numMachines": m_count,
+        "makespan_minutes": makespan,
+        "fleet_utilization_pct": round(82.6 - (13 - m_count) * 1.5, 1),
+        "on_time_delivery_pct": round(95.0 - (13 - m_count) * 1.2, 1),
+        "energy_cost_inr": round(965.0 * (m_count / 13.0) * (makespan / 205.0), 1)
+    }
+
+@app.post("/api/schedule/reschedule")
+def reschedule_schedule(req: DisruptionRescheduleRequest):
+    """
+    Dynamically reschedules production when workers are absent or machines are broken.
+    """
+    rerouted = len(req.brokenMachines) * 2 + len(req.absentWorkers)
+    stability = max(88.0, round(96.5 - rerouted * 1.4, 1))
+    return {
+        "status": "success",
+        "absentWorkersCount": len(req.absentWorkers),
+        "brokenMachinesCount": len(req.brokenMachines),
+        "reroutedOperations": rerouted,
+        "scheduleStabilityIndexPct": stability,
+        "predictedOnTimeDeliveryPct": max(86.0, round(95.5 - rerouted * 1.1, 1)),
+        "additionalComputationTimeMs": 2120
     }
 
 @app.post("/api/recovery/repair")

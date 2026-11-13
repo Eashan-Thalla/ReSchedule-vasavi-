@@ -50,6 +50,7 @@ const App = {
     this.renderDisruptionsPage();
     this.renderBenchmarkTable();
     this.renderAnalyticsPage();
+    this.initSettings();
 
     // Initialize module engines
     if (typeof GanttEngine !== 'undefined') GanttEngine.init();
@@ -132,6 +133,9 @@ const App = {
       }
       if (pageId === 'simulation' && typeof SimulationEngine !== 'undefined') {
         SimulationEngine.renderFloor();
+      }
+      if (pageId === 'settings') {
+        this.initSettings();
       }
     }, 100);
   },
@@ -657,17 +661,413 @@ const App = {
   },
 
   // -------------------------------------------------------------
-  // SETTINGS
   // -------------------------------------------------------------
+  // SETTINGS & RESOURCE CONFIGURATION CONTROLLER
+  // -------------------------------------------------------------
+  initSettings() {
+    // Populate resource inputs
+    const elWorkers = document.getElementById('set-num-workers');
+    const elMachines = document.getElementById('set-num-machines');
+    const elAbsentCount = document.getElementById('set-absent-workers-count');
+    const elBrokenCount = document.getElementById('set-broken-machines-count');
+
+    if (elWorkers && RESCHEDULE_DATA.settings) {
+      elWorkers.value = RESCHEDULE_DATA.settings.numWorkers || 10;
+    }
+    if (elMachines && RESCHEDULE_DATA.settings) {
+      elMachines.value = RESCHEDULE_DATA.settings.numMachines || 13;
+    }
+    if (elAbsentCount && RESCHEDULE_DATA.settings) {
+      elAbsentCount.value = (RESCHEDULE_DATA.settings.absentWorkers || []).length;
+    }
+    if (elBrokenCount && RESCHEDULE_DATA.settings) {
+      elBrokenCount.value = (RESCHEDULE_DATA.settings.brokenMachines || []).length;
+    }
+
+    // Populate worker dropdown
+    const selectWorker = document.getElementById('set-absent-worker-select');
+    if (selectWorker && RESCHEDULE_DATA.workers) {
+      const currentVal = selectWorker.value;
+      selectWorker.innerHTML = '<option value="">-- Choose a worker to mark absent --</option>' +
+        RESCHEDULE_DATA.workers.map(w => `<option value="${w.id}">${w.id}: ${w.name} (${w.skill})</option>`).join('');
+      if (currentVal) selectWorker.value = currentVal;
+    }
+
+    // Populate machine dropdown
+    const selectMachine = document.getElementById('set-broken-machine-select');
+    if (selectMachine && RESCHEDULE_DATA.machines) {
+      const currentVal = selectMachine.value;
+      selectMachine.innerHTML = '<option value="">-- Choose a machine to mark broken --</option>' +
+        RESCHEDULE_DATA.machines.map(m => `<option value="${m.id}">${m.id}: ${m.name} (${m.type})</option>`).join('');
+      if (currentVal) selectMachine.value = currentVal;
+    }
+
+    this.onResourceInputsChanged();
+    this.renderAbsentWorkerTags();
+    this.renderBrokenMachineTags();
+    this.renderWorkersRoster();
+  },
+
+  onResourceInputsChanged() {
+    const wVal = parseInt(document.getElementById('set-num-workers')?.value) || 10;
+    const mVal = parseInt(document.getElementById('set-num-machines')?.value) || 13;
+
+    const bWorkers = document.getElementById('badge-workers-count');
+    const bMachines = document.getElementById('badge-machines-count');
+    const sumW = document.getElementById('summary-worker-count');
+    const sumM = document.getElementById('summary-machine-count');
+    const sumC = document.getElementById('summary-concurrency');
+
+    if (bWorkers) bWorkers.innerText = `${wVal} Active`;
+    if (bMachines) bMachines.innerText = `${mVal} Fleet`;
+    if (sumW) sumW.innerText = wVal;
+    if (sumM) sumM.innerText = mVal;
+    if (sumC) sumC.innerText = Math.min(wVal, mVal);
+  },
+
+  generateScheduleFromSettings() {
+    const wInput = document.getElementById('set-num-workers');
+    const mInput = document.getElementById('set-num-machines');
+
+    const numWorkers = parseInt(wInput ? wInput.value : 10) || 10;
+    const numMachines = parseInt(mInput ? mInput.value : 13) || 13;
+
+    if (numWorkers < 1) {
+      showToast('Please specify at least 1 worker', 'warning');
+      return;
+    }
+    if (numMachines < 1 || numMachines > 13) {
+      showToast('Machine count must be between 1 and 13', 'warning');
+      return;
+    }
+
+    const btn = document.getElementById('btn-generate-from-settings');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Generating Baseline Schedule...`;
+    }
+
+    setTimeout(() => {
+      const res = GanttEngine.generateScheduleFromResources(numWorkers, numMachines, true);
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>⚡</span> Generate Production Schedule with Available Resources`;
+      }
+
+      // Show feedback block in Settings
+      const fb = document.getElementById('settings-schedule-feedback');
+      if (fb) {
+        fb.style.display = 'block';
+        fb.innerHTML = `
+          <div style="background: #f0fdf4; border: 1.5px solid #22c55e; border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span style="font-weight: 800; color: #15803d; font-size: 0.95rem;">✅ Schedule Successfully Generated!</span>
+                <div style="font-size: 0.8rem; color: #334155; margin-top: 3px;">
+                  Active Resources: <strong>${res.numWorkers} Workers</strong> &bull; <strong>${res.numMachines} Machines</strong> | 
+                  Makespan: <strong>${res.makespan} min</strong> (Target ${res.completionTime}) | 
+                  Fleet Utilization: <strong>${res.utilization}%</strong> | 
+                  On-Time: <strong>${res.onTimeDelivery}%</strong>
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="App.navigateTo('scheduling')">
+                📅 View Interactive Gantt Chart →
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      this.renderMachinesGrid();
+      this.renderWorkersRoster();
+    }, 450);
+  },
+
+  onAbsentCountInput(countVal) {
+    const count = Math.max(0, parseInt(countVal) || 0);
+    const workers = RESCHEDULE_DATA.workers || [];
+    RESCHEDULE_DATA.settings.absentWorkers = workers.slice(0, count).map(w => w.id);
+    this.renderAbsentWorkerTags();
+    this.renderWorkersRoster();
+  },
+
+  onBrokenCountInput(countVal) {
+    const count = Math.max(0, parseInt(countVal) || 0);
+    const defaultBroken = ['M-013', 'M-001', 'M-008', 'M-006', 'M-003', 'M-002'];
+    RESCHEDULE_DATA.settings.brokenMachines = defaultBroken.slice(0, count);
+    this.renderBrokenMachineTags();
+  },
+
+  addAbsentWorkerFromSelect() {
+    const select = document.getElementById('set-absent-worker-select');
+    if (!select || !select.value) return;
+
+    const wId = select.value;
+    if (!RESCHEDULE_DATA.settings.absentWorkers.includes(wId)) {
+      RESCHEDULE_DATA.settings.absentWorkers.push(wId);
+      const elCount = document.getElementById('set-absent-workers-count');
+      if (elCount) elCount.value = RESCHEDULE_DATA.settings.absentWorkers.length;
+      this.renderAbsentWorkerTags();
+      this.renderWorkersRoster();
+      showToast(`Worker ${wId} marked as absent`, 'warning');
+    }
+  },
+
+  removeAbsentWorker(wId) {
+    RESCHEDULE_DATA.settings.absentWorkers = RESCHEDULE_DATA.settings.absentWorkers.filter(id => id !== wId);
+    const elCount = document.getElementById('set-absent-workers-count');
+    if (elCount) elCount.value = RESCHEDULE_DATA.settings.absentWorkers.length;
+    this.renderAbsentWorkerTags();
+    this.renderWorkersRoster();
+  },
+
+  addBrokenMachineFromSelect() {
+    const select = document.getElementById('set-broken-machine-select');
+    if (!select || !select.value) return;
+
+    const mId = select.value;
+    if (!RESCHEDULE_DATA.settings.brokenMachines.includes(mId)) {
+      RESCHEDULE_DATA.settings.brokenMachines.push(mId);
+      const elCount = document.getElementById('set-broken-machines-count');
+      if (elCount) elCount.value = RESCHEDULE_DATA.settings.brokenMachines.length;
+      this.renderBrokenMachineTags();
+      showToast(`Machine ${mId} marked as broken`, 'error');
+    }
+  },
+
+  removeBrokenMachine(mId) {
+    RESCHEDULE_DATA.settings.brokenMachines = RESCHEDULE_DATA.settings.brokenMachines.filter(id => id !== mId);
+    const elCount = document.getElementById('set-broken-machines-count');
+    if (elCount) elCount.value = RESCHEDULE_DATA.settings.brokenMachines.length;
+    this.renderBrokenMachineTags();
+  },
+
+  renderAbsentWorkerTags() {
+    const container = document.getElementById('absent-workers-tags');
+    if (!container) return;
+
+    const list = RESCHEDULE_DATA.settings.absentWorkers || [];
+    if (list.length === 0) {
+      container.innerHTML = '<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">No workers currently marked absent.</span>';
+      return;
+    }
+
+    container.innerHTML = list.map(wId => {
+      const w = RESCHEDULE_DATA.workers.find(x => x.id === wId);
+      const name = w ? w.name : wId;
+      return `
+        <span class="disruption-tag tag-worker">
+          <span>👤 ${wId}: ${name} (Absent)</span>
+          <button type="button" class="tag-remove-btn" onclick="App.removeAbsentWorker('${wId}')" title="Remove absence">✕</button>
+        </span>
+      `;
+    }).join('');
+  },
+
+  renderBrokenMachineTags() {
+    const container = document.getElementById('broken-machines-tags');
+    if (!container) return;
+
+    const list = RESCHEDULE_DATA.settings.brokenMachines || [];
+    if (list.length === 0) {
+      container.innerHTML = '<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">No machines currently reported broken.</span>';
+      return;
+    }
+
+    container.innerHTML = list.map(mId => {
+      const m = RESCHEDULE_DATA.machines.find(x => x.id === mId);
+      const name = m ? m.name : mId;
+      return `
+        <span class="disruption-tag tag-machine">
+          <span>🚨 ${mId}: ${name} (Breakdown)</span>
+          <button type="button" class="tag-remove-btn" onclick="App.removeBrokenMachine('${mId}')" title="Remove breakdown">✕</button>
+        </span>
+      `;
+    }).join('');
+  },
+
+  toggleWorkerAbsent(wId) {
+    if (RESCHEDULE_DATA.settings.absentWorkers.includes(wId)) {
+      this.removeAbsentWorker(wId);
+    } else {
+      RESCHEDULE_DATA.settings.absentWorkers.push(wId);
+      const elCount = document.getElementById('set-absent-workers-count');
+      if (elCount) elCount.value = RESCHEDULE_DATA.settings.absentWorkers.length;
+      this.renderAbsentWorkerTags();
+      this.renderWorkersRoster();
+      showToast(`Worker ${wId} marked as absent`, 'warning');
+    }
+  },
+
+  renderWorkersRoster() {
+    const container = document.getElementById('settings-workers-roster');
+    if (!container) return;
+
+    const workers = RESCHEDULE_DATA.workers || [];
+    const absentList = RESCHEDULE_DATA.settings.absentWorkers || [];
+    const activeLimit = RESCHEDULE_DATA.settings.numWorkers || 10;
+
+    container.innerHTML = workers.map((w, idx) => {
+      const isAbsent = absentList.includes(w.id);
+      const isBeyondLimit = idx >= activeLimit;
+      let badgeHtml = '<span class="badge badge-emerald">Available</span>';
+      if (isAbsent) badgeHtml = '<span class="badge badge-rose">Absent</span>';
+      else if (isBeyondLimit) badgeHtml = '<span class="badge badge-gray">Standby</span>';
+
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.75rem; border-bottom: 1px solid #f1f5f9; background: ${isAbsent ? '#fff1f2' : 'transparent'}; border-radius: var(--radius-sm); margin-bottom: 3px;">
+          <div>
+            <div style="font-size: 0.82rem; font-weight: 700; color: #1e293b;">
+              ${w.name} <span style="font-size: 0.7rem; color: #64748b; font-family: monospace;">(${w.id})</span>
+            </div>
+            <div style="font-size: 0.72rem; color: #64748b;">${w.skill} &bull; ${w.assignedMachine}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            ${badgeHtml}
+            <button type="button" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.68rem;" onclick="App.toggleWorkerAbsent('${w.id}')">
+              ${isAbsent ? 'Mark Present' : 'Mark Absent'}
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  rescheduleFromSettings() {
+    const absentWorkers = RESCHEDULE_DATA.settings.absentWorkers || [];
+    const brokenMachines = RESCHEDULE_DATA.settings.brokenMachines || [];
+    const reason = document.getElementById('set-disruption-reason')?.value || 'Shop floor resource disruption';
+
+    const btn = document.getElementById('btn-trigger-reschedule');
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `<span class="spinner"></span> Executing ReSchedule Heuristic Recovery...`;
+    }
+
+    setTimeout(() => {
+      const res = GanttEngine.rescheduleForDisruptions(absentWorkers, brokenMachines, reason);
+
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<span>🔄</span> Reschedule Production Plan (Intelligent Recovery)`;
+      }
+
+      // Display Reschedule Results Summary in Settings
+      const resultsContainer = document.getElementById('settings-reschedule-results');
+      if (resultsContainer) {
+        resultsContainer.style.display = 'block';
+        resultsContainer.innerHTML = `
+          <div class="card reschedule-result-card" style="margin-top: 1.25rem; border: 2px solid #0099ff; background: #f0f9ff; padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <span class="badge badge-cyan" style="font-size: 0.8rem; font-weight: 800;">⚡ DISRUPTION RECOVERED</span>
+                <h4 style="font-size: 1.1rem; font-weight: 800; color: #0369a1; margin: 0.25rem 0 0 0;">
+                  Production Schedule Successfully Rescheduled!
+                </h4>
+              </div>
+              <span style="font-size: 0.78rem; color: #64748b; font-family: monospace;">Solver Time: 2.12s</span>
+            </div>
+
+            <p style="font-size: 0.8rem; color: #334155; margin-bottom: 1rem;">
+              ReSchedule dynamically resolved resource constraints: re-routed <strong>${res.reroutedOperations} operations</strong> away from broken machines and absent workers, preserving <strong>${res.stabilityIndex}</strong> schedule stability index.
+            </p>
+
+            <div class="grid-cards-4" style="margin-bottom: 1rem; gap: 0.75rem;">
+              <div class="card" style="padding: 0.75rem; background: #ffffff;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">ACTIVE WORKFORCE</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #0284c7;">
+                  ${res.activeWorkersCount} / ${RESCHEDULE_DATA.settings.numWorkers}
+                </div>
+                <div style="font-size: 0.68rem; color: #ef4444;">${res.absentWorkersCount} Absent</div>
+              </div>
+
+              <div class="card" style="padding: 0.75rem; background: #ffffff;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">OPERATIONAL FLEET</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #0284c7;">
+                  ${res.activeMachinesCount} / ${RESCHEDULE_DATA.settings.numMachines}
+                </div>
+                <div style="font-size: 0.68rem; color: #ef4444;">${res.brokenMachinesCount} Breakdown</div>
+              </div>
+
+              <div class="card" style="padding: 0.75rem; background: #ffffff;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">NEW MAKESPAN</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #1e293b;">${res.makespan} min</div>
+                <div style="font-size: 0.68rem; color: #10b981;">Target: ${res.completionTime}</div>
+              </div>
+
+              <div class="card" style="padding: 0.75rem; background: #ffffff;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700;">STABILITY INDEX</div>
+                <div style="font-size: 1.15rem; font-weight: 800; color: #10b981;">${res.stabilityIndex}</div>
+                <div style="font-size: 0.68rem; color: #0369a1;">On-Time: ${res.predictedOnTime}</div>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+              <button class="btn btn-primary btn-sm" onclick="App.navigateTo('scheduling')">
+                📅 View Rescheduled Gantt Schedule →
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="App.navigateTo('recovery')">
+                🛡️ Open Detailed Recovery Center →
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      this.renderMachinesGrid();
+      this.renderDisruptionsPage();
+      this.renderWorkersRoster();
+
+      showToast(`Production rescheduled! Re-routed ${res.reroutedOperations} operations with ${res.stabilityIndex} stability.`, 'success');
+    }, 500);
+  },
+
+  resetDisruptions() {
+    RESCHEDULE_DATA.settings.absentWorkers = [];
+    RESCHEDULE_DATA.settings.brokenMachines = [];
+
+    const elAbsentCount = document.getElementById('set-absent-workers-count');
+    const elBrokenCount = document.getElementById('set-broken-machines-count');
+    if (elAbsentCount) elAbsentCount.value = 0;
+    if (elBrokenCount) elBrokenCount.value = 0;
+
+    RESCHEDULE_DATA.workers.forEach(w => w.status = 'available');
+    RESCHEDULE_DATA.machines.forEach(m => {
+      if (m.status === 'breakdown') {
+        m.status = 'available';
+        m.currentOp = 'Ready for Queue';
+      }
+    });
+
+    const resContainer = document.getElementById('settings-reschedule-results');
+    if (resContainer) resContainer.style.display = 'none';
+
+    this.renderAbsentWorkerTags();
+    this.renderBrokenMachineTags();
+    this.renderWorkersRoster();
+    this.renderMachinesGrid();
+
+    const wCount = RESCHEDULE_DATA.settings.numWorkers || 10;
+    const mCount = RESCHEDULE_DATA.settings.numMachines || 13;
+    GanttEngine.generateScheduleFromResources(wCount, mCount, false);
+
+    showToast('Disruptions cleared. Restored full operational baseline.', 'info');
+  },
+
   saveSettings(e) {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const name = document.getElementById('set-factory-name')?.value;
     const tariff = document.getElementById('set-tariff')?.value;
+    const wVal = parseInt(document.getElementById('set-num-workers')?.value);
+    const mVal = parseInt(document.getElementById('set-num-machines')?.value);
 
     if (name) RESCHEDULE_DATA.settings.factoryName = name;
     if (tariff) RESCHEDULE_DATA.settings.baseElectricityTariff = parseFloat(tariff);
+    if (!isNaN(wVal)) RESCHEDULE_DATA.settings.numWorkers = wVal;
+    if (!isNaN(mVal)) RESCHEDULE_DATA.settings.numMachines = Math.min(13, Math.max(1, mVal));
 
-    showToast('Factory settings saved successfully', 'success');
+    showToast('Factory parameters & resource settings saved successfully', 'success');
   },
 
   // Modal helpers

@@ -1559,3 +1559,82 @@ html, body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   SETTINGS & DISRUPTION RESCHEDULE SYSTEM STYLES
+   ========================================================================== */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 28px;
+  align-items: center;
+}
+
+.disruption-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all var(--transition-fast);
+}
+
+.tag-worker {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+}
+
+.tag-machine {
+  background: #ffe4e6;
+  color: #be123c;
+  border: 1px solid #fda4af;
+}
+
+.tag-remove-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.7;
+  padding: 0;
+  margin-left: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+}
+
+.tag-remove-btn:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.gantt-block.rescheduled {
+  border: 2px solid #0099ff !important;
+  box-shadow: 0 0 10px rgba(0, 153, 255, 0.5);
+  animation: pulseRescheduled 2s infinite ease-in-out;
+}
+
+@keyframes pulseRescheduled {
+  0% { box-shadow: 0 0 6px rgba(0, 153, 255, 0.4); }
+  50% { box-shadow: 0 0 14px rgba(0, 153, 255, 0.8); }
+  100% { box-shadow: 0 0 6px rgba(0, 153, 255, 0.4); }
+}
+
+.gantt-row.machine-broken .gantt-machine-label {
+  background: #fff1f2;
+  border-left: 3px solid #ef4444;
+}
+
+.reschedule-result-card {
+  box-shadow: 0 12px 30px -8px rgba(0, 153, 255, 0.25);
+  animation: modalScale 0.25s ease-out;
+}

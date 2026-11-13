@@ -14,6 +14,12 @@ const GanttEngine = {
 
   init() {
     this.scheduleState = JSON.parse(JSON.stringify(RESCHEDULE_DATA.scheduleBlocks));
+    // Apply current settings if present
+    if (RESCHEDULE_DATA.settings) {
+      if (RESCHEDULE_DATA.settings.numWorkers && RESCHEDULE_DATA.settings.numMachines) {
+        this.generateScheduleFromResources(RESCHEDULE_DATA.settings.numWorkers, RESCHEDULE_DATA.settings.numMachines, false);
+      }
+    }
     this.render();
     this.bindEvents();
   },
@@ -76,6 +82,262 @@ const GanttEngine = {
     }
   },
 
+  /**
+   * Generates production schedule dynamically based on Number of Workers and Number of Machines available.
+   */
+  generateScheduleFromResources(numWorkers, numMachines, notify = true) {
+    const wCount = Math.max(1, parseInt(numWorkers) || 10);
+    const mCount = Math.min(13, Math.max(1, parseInt(numMachines) || 13));
+
+    RESCHEDULE_DATA.settings.numWorkers = wCount;
+    RESCHEDULE_DATA.settings.numMachines = mCount;
+
+    // Filter available operational machines up to mCount
+    const availableMachines = RESCHEDULE_DATA.machines.slice(0, mCount).map(m => m.id);
+
+    // Map capabilities for routing when machines are limited
+    const altCapable = {
+      'M-001': ['M-003', 'M-006'],
+      'M-002': ['M-004', 'M-001'],
+      'M-003': ['M-001'],
+      'M-004': ['M-002'],
+      'M-005': ['M-007'],
+      'M-006': ['M-001', 'M-003'],
+      'M-007': ['M-002'],
+      'M-008': ['M-005'],
+      'M-009': ['M-008'],
+      'M-010': ['M-011', 'M-001'],
+      'M-011': ['M-010'],
+      'M-012': ['M-005', 'M-001'],
+      'M-013': ['M-001', 'M-003']
+    };
+
+    let base = JSON.parse(JSON.stringify(RESCHEDULE_DATA.scheduleBlocks));
+
+    // Re-route operations if their target machine is beyond fleet capacity
+    base.forEach((b, idx) => {
+      if (!availableMachines.includes(b.machineId)) {
+        if (b.type === 'processing') {
+          const candidates = altCapable[b.machineId] || [];
+          const viable = candidates.find(c => availableMachines.includes(c)) || availableMachines[0];
+          b.originalMachineId = b.machineId;
+          b.machineId = viable;
+          b.start += 15 + (idx % 3) * 10;
+          b.end += 15 + (idx % 3) * 10;
+          b.isRescheduled = true;
+          b.label = `⚡ ${b.label} [Fleet-Adj to ${viable}]`;
+        }
+      }
+    });
+
+    // Handle operator constraints: if workers < 8, stagger operations
+    if (wCount < 8) {
+      const staggerDelta = (8 - wCount) * 12;
+      base.forEach((b, i) => {
+        if (b.type === 'processing') {
+          const shift = (i % (8 - wCount + 1)) * staggerDelta;
+          b.start += shift;
+          b.end += shift;
+        }
+      });
+    }
+
+    this.scheduleState = base;
+
+    // Dynamic metrics computation
+    const maxEnd = Math.max(...base.map(b => b.end), 200);
+    const makespan = Math.max(190, maxEnd);
+    const hours = Math.floor(makespan / 60) + 8;
+    const mins = makespan % 60;
+    const compTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')} PM`;
+    const util = (Math.max(60, Math.min(95, 82.6 - (13 - mCount) * 1.8 + (wCount >= 10 ? 2 : -2)))).toFixed(1);
+    const changeover = Math.max(15, 22 + (13 - mCount) * 2);
+    const energy = Math.round(965 * (mCount / 13) * (makespan / 205));
+    const ontime = (Math.max(75, Math.min(98, 95.0 - (13 - mCount) * 1.5 - Math.max(0, 10 - wCount) * 1.8))).toFixed(1);
+
+    this.updateSummaryKPIs(makespan, compTime, util, changeover, energy, ontime);
+    this.render();
+
+    const summary = {
+      numWorkers: wCount,
+      numMachines: mCount,
+      makespan,
+      completionTime: compTime,
+      utilization: util,
+      changeover,
+      energy,
+      onTimeDelivery: ontime
+    };
+
+    RESCHEDULE_DATA.settings.lastScheduleSummary = summary;
+    if (notify) {
+      showToast(`Schedule generated for ${wCount} workers & ${mCount} machines (Makespan: ${makespan}m)`, 'success');
+    }
+    return summary;
+  },
+
+  /**
+   * Reschedules production plan dynamically when workers are absent or machines are broken.
+   */
+  rescheduleForDisruptions(absentWorkerIds = [], brokenMachineIds = [], reason = '') {
+    RESCHEDULE_DATA.settings.absentWorkers = [...absentWorkerIds];
+    RESCHEDULE_DATA.settings.brokenMachines = [...brokenMachineIds];
+
+    // Update worker status
+    RESCHEDULE_DATA.workers.forEach(w => {
+      w.status = absentWorkerIds.includes(w.id) ? 'absent' : 'available';
+    });
+
+    // Update machine status
+    RESCHEDULE_DATA.machines.forEach(m => {
+      if (brokenMachineIds.includes(m.id)) {
+        m.status = 'breakdown';
+        m.currentOp = reason || 'Emergency Breakdown (Offline)';
+      } else if (m.status === 'breakdown' && !brokenMachineIds.includes(m.id)) {
+        m.status = 'available';
+        m.currentOp = 'Ready for Queue';
+      }
+    });
+
+    const fleetCap = RESCHEDULE_DATA.settings.numMachines || 13;
+    const operationalMachines = RESCHEDULE_DATA.machines
+      .slice(0, fleetCap)
+      .filter(m => !brokenMachineIds.includes(m.id))
+      .map(m => m.id);
+
+    const availableWorkers = RESCHEDULE_DATA.workers
+      .slice(0, RESCHEDULE_DATA.settings.numWorkers || 10)
+      .filter(w => !absentWorkerIds.includes(w.id));
+
+    const altRouting = {
+      'M-001': ['M-003', 'M-006', 'M-002'],
+      'M-002': ['M-004', 'M-001'],
+      'M-003': ['M-001', 'M-006'],
+      'M-004': ['M-002'],
+      'M-005': ['M-007', 'M-008'],
+      'M-006': ['M-001', 'M-003'],
+      'M-007': ['M-002', 'M-005'],
+      'M-008': ['M-005', 'M-009'],
+      'M-009': ['M-008'],
+      'M-010': ['M-011', 'M-001'],
+      'M-011': ['M-010'],
+      'M-012': ['M-005', 'M-001'],
+      'M-013': ['M-001', 'M-003']
+    };
+
+    let base = JSON.parse(JSON.stringify(RESCHEDULE_DATA.scheduleBlocks));
+    let reroutedCount = 0;
+
+    // Process blocks for broken machines
+    base = base.map(b => {
+      if (brokenMachineIds.includes(b.machineId)) {
+        if (b.type === 'processing') {
+          reroutedCount++;
+          const candidates = altRouting[b.machineId] || [];
+          const targetMachine = candidates.find(c => operationalMachines.includes(c)) || operationalMachines[0] || 'M-001';
+          const backupWorker = availableWorkers[reroutedCount % (availableWorkers.length || 1)] || { id: 'W-BACKUP', name: 'Backup Operator' };
+
+          return {
+            ...b,
+            originalMachineId: b.machineId,
+            machineId: targetMachine,
+            start: b.start + 15,
+            end: b.end + 20,
+            isRescheduled: true,
+            workerId: backupWorker.id,
+            workerName: backupWorker.name + ' (Backup)',
+            label: `⭐ ${b.label} [Re-routed from ${b.machineId}]`
+          };
+        }
+      }
+
+      // Process operations assigned to absent workers
+      if (b.type === 'processing' && b.workerId && absentWorkerIds.includes(b.workerId)) {
+        reroutedCount++;
+        const backupWorker = availableWorkers[reroutedCount % (availableWorkers.length || 1)] || { id: 'W-BACKUP', name: 'Backup Operator' };
+        return {
+          ...b,
+          workerId: backupWorker.id,
+          workerName: backupWorker.name + ' (Covering ' + b.workerId + ')',
+          isRescheduled: true,
+          label: `${b.label} [Worker Reassigned]`
+        };
+      }
+
+      return b;
+    });
+
+    // Add breakdown blocks for broken machines
+    brokenMachineIds.forEach(bmId => {
+      const exists = base.some(b => b.machineId === bmId && b.type === 'breakdown');
+      if (!exists) {
+        base.push({
+          id: `SB-BK-${bmId}`,
+          machineId: bmId,
+          label: `UNEXPECTED BREAKDOWN: ${bmId} Offline`,
+          start: 45,
+          end: 240,
+          type: 'breakdown'
+        });
+      }
+    });
+
+    this.scheduleState = base;
+
+    // Calculate recovered KPIs
+    const makespan = 205 + reroutedCount * 5;
+    const hours = Math.floor(makespan / 60) + 8;
+    const mins = makespan % 60;
+    const compTime = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')} PM`;
+    const stability = (Math.max(88, 96.5 - reroutedCount * 1.4)).toFixed(1);
+    const onTime = (Math.max(86, 95.5 - reroutedCount * 1.1)).toFixed(1);
+    const energy = 965 + reroutedCount * 18;
+    const changeover = 22 + reroutedCount * 4;
+
+    this.updateSummaryKPIs(makespan, compTime, 81.2, changeover, energy, onTime);
+    this.render();
+
+    // Register disruption audit
+    const disId = `DIS-RESCHED-${Date.now().toString().slice(-4)}`;
+    const disTitle = `Adaptive ReSchedule: ${absentWorkerIds.length} Absent Operator(s) & ${brokenMachineIds.length} Broken Machine(s)`;
+    const disDesc = reason || `Dynamic recovery executed. Re-routed ${reroutedCount} operations across active fleet. Preserved ${stability}% schedule stability.`;
+
+    RESCHEDULE_DATA.disruptions.unshift({
+      id: disId,
+      title: disTitle,
+      type: 'breakdown',
+      machineId: brokenMachineIds.join(', ') || 'N/A',
+      startTime: 'Live Now',
+      estRepairMinutes: 120,
+      affectedJobs: ['JOB-001', 'JOB-007'],
+      impactLevel: 'Managed',
+      status: 'Recovered via ReSchedule',
+      desc: disDesc
+    });
+
+    RESCHEDULE_DATA.disruptionHistory.unshift({
+      id: `HIST-${Date.now().toString().slice(-4)}`,
+      time: 'Just now',
+      event: disTitle,
+      resolution: `Re-routed ${reroutedCount} tasks, ${stability}% stability preserved`,
+      recoveredBy: 'ReSchedule Solver'
+    });
+
+    return {
+      status: 'success',
+      disruptionId: disId,
+      absentWorkersCount: absentWorkerIds.length,
+      brokenMachinesCount: brokenMachineIds.length,
+      reroutedOperations: reroutedCount,
+      makespan,
+      completionTime: compTime,
+      stabilityIndex: `${stability}%`,
+      predictedOnTime: `${onTime}%`,
+      activeWorkersCount: availableWorkers.length,
+      activeMachinesCount: operationalMachines.length
+    };
+  },
+
   updateSummaryKPIs(makespan, completion, util, changeover, energy, ontime) {
     const elMakespan = document.getElementById('kpi-sched-makespan');
     const elComp = document.getElementById('kpi-sched-completion');
@@ -114,7 +376,29 @@ const GanttEngine = {
 
     // Rows per machine
     let rowsHtml = '';
-    machines.forEach(m => {
+    const maxMachines = (RESCHEDULE_DATA.settings && RESCHEDULE_DATA.settings.numMachines) ? RESCHEDULE_DATA.settings.numMachines : 13;
+    const brokenList = (RESCHEDULE_DATA.settings && RESCHEDULE_DATA.settings.brokenMachines) || [];
+
+    machines.forEach((m, mIndex) => {
+      // Check if machine is beyond available fleet capacity set in Settings
+      if (mIndex >= maxMachines) {
+        rowsHtml += `
+          <div class="gantt-row offline-machine" style="opacity: 0.45; background: #f8fafc;">
+            <div class="gantt-machine-label" title="${m.name} (Offline - Fleet Capacity Limit)">
+              <span class="live-dot" style="background-color: #94a3b8;"></span>
+              <strong>${m.id}</strong>
+              <span style="font-size: 0.65rem; color: #ef4444; font-weight: 700;">OFFLINE</span>
+            </div>
+            <div class="gantt-lane" style="display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 0.75rem; font-style: italic;">
+              Workcenter offline (Fleet capacity set to ${maxMachines} in Settings)
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const isBroken = brokenList.includes(m.id) || m.status === 'breakdown';
+
       // Filter blocks for this machine
       const mBlocks = this.scheduleState.filter(b => {
         if (b.machineId !== m.id) return false;
@@ -131,6 +415,7 @@ const GanttEngine = {
         let bgStyle = '';
         let extraClass = b.type;
         if (b.isDelayed) extraClass += ' delayed';
+        if (b.isRescheduled) extraClass += ' rescheduled';
 
         if (b.type === 'processing') {
           const color = RESCHEDULE_DATA.jobColors[b.jobId] || '#06b6d4';
@@ -144,6 +429,8 @@ const GanttEngine = {
                data-label="${b.label}"
                data-start="${b.start}"
                data-end="${b.end}"
+               data-worker="${b.workerName ? b.workerName + ' (' + (b.workerId || '') + ')' : ''}"
+               data-rescheduled="${b.isRescheduled ? 'true' : 'false'}"
                data-machine="${m.name} (${m.id})"
                data-type="${b.type}">
             <span>${b.label}</span>
@@ -151,12 +438,16 @@ const GanttEngine = {
         `;
       });
 
+      const labelStatusColor = isBroken ? '#ef4444' : this.getMachineStatusColor(m.status);
+
       rowsHtml += `
-        <div class="gantt-row">
-          <div class="gantt-machine-label" title="${m.name}">
-            <span class="live-dot ${m.status === 'breakdown' ? 'alert' : ''}" style="background-color: ${this.getMachineStatusColor(m.status)}"></span>
+        <div class="gantt-row ${isBroken ? 'machine-broken' : ''}">
+          <div class="gantt-machine-label" title="${m.name} ${isBroken ? '(BROKEN WORKCENTER)' : ''}">
+            <span class="live-dot ${isBroken ? 'alert' : ''}" style="background-color: ${labelStatusColor}"></span>
             <strong>${m.id}</strong>
-            <span style="font-size: 0.68rem; color: #64748b; font-weight: normal; truncate">${m.type.split(' ')[0]}</span>
+            <span style="font-size: 0.68rem; color: ${isBroken ? '#ef4444' : '#64748b'}; font-weight: ${isBroken ? '700' : 'normal'};">
+              ${isBroken ? '🚨 BROKEN' : m.type.split(' ')[0]}
+            </span>
           </div>
           <div class="gantt-lane">
             ${blocksHtml}
@@ -173,6 +464,21 @@ const GanttEngine = {
         ${rowsHtml}
       </div>
     `;
+
+    // Update banner KPIs if present
+    const wTotal = (RESCHEDULE_DATA.settings && RESCHEDULE_DATA.settings.numWorkers) || 10;
+    const wAbsent = (RESCHEDULE_DATA.settings && RESCHEDULE_DATA.settings.absentWorkers) ? RESCHEDULE_DATA.settings.absentWorkers.length : 0;
+    const mTotal = maxMachines;
+    const mBroken = brokenList.length;
+
+    const elGanttWorkers = document.getElementById('gantt-stat-workers');
+    const elGanttAbsent = document.getElementById('gantt-stat-absent');
+    const elGanttMachines = document.getElementById('gantt-stat-machines');
+    const elGanttBroken = document.getElementById('gantt-stat-broken');
+    if (elGanttWorkers) elGanttWorkers.innerText = `${wTotal - wAbsent} Active`;
+    if (elGanttAbsent) elGanttAbsent.innerText = `${wAbsent} Absent`;
+    if (elGanttMachines) elGanttMachines.innerText = `${Math.max(0, mTotal - mBroken)}/${mTotal} Active`;
+    if (elGanttBroken) elGanttBroken.innerText = `${mBroken} Broken`;
 
     this.attachTooltips();
   },
@@ -196,11 +502,16 @@ const GanttEngine = {
     blocks.forEach(b => {
       b.addEventListener('mouseenter', e => {
         const d = b.dataset;
+        let workerHtml = d.worker ? `<div>Assigned Worker: <span style="color: #38bdf8; font-weight: 700;">👤 ${d.worker}</span></div>` : '';
+        let reschedHtml = d.rescheduled === 'true' ? `<div style="color: #f59e0b; font-weight: 700; margin-top: 4px; font-size: 0.75rem;">⚡ Adaptive Rescheduled Operation</div>` : '';
+
         tooltip.innerHTML = `
           <div style="font-weight: 700; color: #22d3ee; margin-bottom: 4px;">${d.label}</div>
           <div>Machine: <span style="color: #cbd5e1;">${d.machine}</span></div>
+          ${workerHtml}
           <div>Duration: <span style="color: #cbd5e1;">${parseInt(d.end) - parseInt(d.start)} mins</span> (T+${d.start}m to T+${d.end}m)</div>
           <div>Category: <span style="text-transform: capitalize; color: #fff;">${d.type}</span></div>
+          ${reschedHtml}
         `;
         tooltip.style.display = 'block';
       });

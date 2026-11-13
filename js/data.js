@@ -4,6 +4,20 @@
  */
 
 const RESCHEDULE_DATA = {
+  // 10 Factory Floor Human Operators / Workforce Roster
+  workers: [
+    { id: 'W-001', name: 'Rajesh Sharma', skill: '5-Axis CNC Milling', status: 'available', assignedMachine: 'M-001', experienceYrs: 8 },
+    { id: 'W-002', name: 'Priya Patel', skill: 'Precision Drilling & Boring', status: 'available', assignedMachine: 'M-002', experienceYrs: 5 },
+    { id: 'W-003', name: 'Amit Verma', skill: 'CNC Lathe & Turning', status: 'available', assignedMachine: 'M-006', experienceYrs: 7 },
+    { id: 'W-004', name: 'Sunita Rao', skill: 'Laser Cutting & Press Brake', status: 'available', assignedMachine: 'M-010', experienceYrs: 6 },
+    { id: 'W-005', name: 'Vikram Singh', skill: 'Robotic MIG/TIG Welding', status: 'available', assignedMachine: 'M-012', experienceYrs: 9 },
+    { id: 'W-006', name: 'Deepa Nair', skill: 'Surface Finishing & Polish', status: 'available', assignedMachine: 'M-005', experienceYrs: 4 },
+    { id: 'W-007', name: 'Karthik Iyer', skill: 'CMM Quality Inspection', status: 'available', assignedMachine: 'M-007', experienceYrs: 11 },
+    { id: 'W-008', name: 'Manoj Kumar', skill: 'Vacuum Heat Treatment', status: 'available', assignedMachine: 'M-009', experienceYrs: 10 },
+    { id: 'W-009', name: 'Sneha Reddy', skill: 'Wire EDM Machining', status: 'available', assignedMachine: 'M-013', experienceYrs: 6 },
+    { id: 'W-010', name: 'Arjun Das', skill: 'CNC Vertical Milling', status: 'available', assignedMachine: 'M-003', experienceYrs: 5 }
+  ],
+
   // 13 Factory Floor Work Centers / Machines
   machines: [
     {
@@ -371,46 +385,46 @@ const RESCHEDULE_DATA = {
 
   // Initial Schedule Blocks for Gantt (0 to 240 mins)
   scheduleBlocks: [
-    { id: 'SB-1', machineId: 'M-001', jobId: 'JOB-001', label: 'JOB-001 [Milling]', start: 0, end: 45, type: 'processing' },
-    { id: 'SB-2', machineId: 'M-001', label: 'Tool Changeover', start: 45, end: 55, type: 'changeover' },
-    { id: 'SB-3', machineId: 'M-001', jobId: 'JOB-008', label: 'JOB-008 [Milling]', start: 55, end: 110, type: 'processing' },
-    { id: 'SB-4', machineId: 'M-001', jobId: 'JOB-005', label: 'JOB-005 [Cavity Mill]', start: 120, end: 190, type: 'processing' },
+    { id: 'SB-1', machineId: 'M-001', jobId: 'JOB-001', label: 'JOB-001 [Milling]', start: 0, end: 45, type: 'processing', workerId: 'W-001', workerName: 'Rajesh Sharma' },
+    { id: 'SB-2', machineId: 'M-001', label: 'Tool Changeover', start: 45, end: 55, type: 'changeover', workerId: 'W-001', workerName: 'Rajesh Sharma' },
+    { id: 'SB-3', machineId: 'M-001', jobId: 'JOB-008', label: 'JOB-008 [Milling]', start: 55, end: 110, type: 'processing', workerId: 'W-001', workerName: 'Rajesh Sharma' },
+    { id: 'SB-4', machineId: 'M-001', jobId: 'JOB-005', label: 'JOB-005 [Cavity Mill]', start: 120, end: 190, type: 'processing', workerId: 'W-001', workerName: 'Rajesh Sharma' },
 
-    { id: 'SB-5', machineId: 'M-002', jobId: 'JOB-001', label: 'JOB-001 [Drill & Tap]', start: 50, end: 80, type: 'processing' },
-    { id: 'SB-6', machineId: 'M-002', jobId: 'JOB-008', label: 'JOB-008 [Cross Hole]', start: 115, end: 140, type: 'processing' },
-    { id: 'SB-7', machineId: 'M-002', jobId: 'JOB-005', label: 'JOB-005 [Flange Drill]', start: 195, end: 225, type: 'processing' },
+    { id: 'SB-5', machineId: 'M-002', jobId: 'JOB-001', label: 'JOB-001 [Drill & Tap]', start: 50, end: 80, type: 'processing', workerId: 'W-002', workerName: 'Priya Patel' },
+    { id: 'SB-6', machineId: 'M-002', jobId: 'JOB-008', label: 'JOB-008 [Cross Hole]', start: 115, end: 140, type: 'processing', workerId: 'W-002', workerName: 'Priya Patel' },
+    { id: 'SB-7', machineId: 'M-002', jobId: 'JOB-005', label: 'JOB-005 [Flange Drill]', start: 195, end: 225, type: 'processing', workerId: 'W-002', workerName: 'Priya Patel' },
 
-    { id: 'SB-8', machineId: 'M-003', jobId: 'JOB-002', label: 'JOB-002 [5-Axis Mill]', start: 65, end: 115, type: 'processing' },
-    { id: 'SB-9', machineId: 'M-003', label: 'Changeover', start: 115, end: 125, type: 'changeover' },
-    { id: 'SB-10', machineId: 'M-003', jobId: 'JOB-009', label: 'JOB-009 [Gear Mill]', start: 130, end: 195, type: 'processing' },
+    { id: 'SB-8', machineId: 'M-003', jobId: 'JOB-002', label: 'JOB-002 [5-Axis Mill]', start: 65, end: 115, type: 'processing', workerId: 'W-010', workerName: 'Arjun Das' },
+    { id: 'SB-9', machineId: 'M-003', label: 'Changeover', start: 115, end: 125, type: 'changeover', workerId: 'W-010', workerName: 'Arjun Das' },
+    { id: 'SB-10', machineId: 'M-003', jobId: 'JOB-009', label: 'JOB-009 [Gear Mill]', start: 130, end: 195, type: 'processing', workerId: 'W-010', workerName: 'Arjun Das' },
 
-    { id: 'SB-11', machineId: 'M-004', jobId: 'JOB-010', label: 'JOB-010 [Bolt Circle]', start: 120, end: 160, type: 'processing' },
+    { id: 'SB-11', machineId: 'M-004', jobId: 'JOB-010', label: 'JOB-010 [Bolt Circle]', start: 120, end: 160, type: 'processing', workerId: 'W-002', workerName: 'Priya Patel' },
 
-    { id: 'SB-12', machineId: 'M-005', jobId: 'JOB-004', label: 'JOB-004 [Polish]', start: 80, end: 105, type: 'processing' },
-    { id: 'SB-13', machineId: 'M-005', jobId: 'JOB-001', label: 'JOB-001 [Vibratory]', start: 110, end: 135, type: 'processing' },
-    { id: 'SB-14', machineId: 'M-005', jobId: 'JOB-007', label: 'JOB-007 [Paste Polish]', start: 200, end: 240, type: 'processing' },
+    { id: 'SB-12', machineId: 'M-005', jobId: 'JOB-004', label: 'JOB-004 [Polish]', start: 80, end: 105, type: 'processing', workerId: 'W-006', workerName: 'Deepa Nair' },
+    { id: 'SB-13', machineId: 'M-005', jobId: 'JOB-001', label: 'JOB-001 [Vibratory]', start: 110, end: 135, type: 'processing', workerId: 'W-006', workerName: 'Deepa Nair' },
+    { id: 'SB-14', machineId: 'M-005', jobId: 'JOB-007', label: 'JOB-007 [Paste Polish]', start: 200, end: 240, type: 'processing', workerId: 'W-006', workerName: 'Deepa Nair' },
 
-    { id: 'SB-15', machineId: 'M-006', jobId: 'JOB-002', label: 'JOB-002 [Turning]', start: 0, end: 60, type: 'processing' },
-    { id: 'SB-16', machineId: 'M-006', jobId: 'JOB-003', label: 'JOB-003 [Grooving]', start: 65, end: 105, type: 'processing' },
-    { id: 'SB-17', machineId: 'M-006', jobId: 'JOB-010', label: 'JOB-010 [Roughing]', start: 110, end: 185, type: 'processing' },
+    { id: 'SB-15', machineId: 'M-006', jobId: 'JOB-002', label: 'JOB-002 [Turning]', start: 0, end: 60, type: 'processing', workerId: 'W-003', workerName: 'Amit Verma' },
+    { id: 'SB-16', machineId: 'M-006', jobId: 'JOB-003', label: 'JOB-003 [Grooving]', start: 65, end: 105, type: 'processing', workerId: 'W-003', workerName: 'Amit Verma' },
+    { id: 'SB-17', machineId: 'M-006', jobId: 'JOB-010', label: 'JOB-010 [Roughing]', start: 110, end: 185, type: 'processing', workerId: 'W-003', workerName: 'Amit Verma' },
 
-    { id: 'SB-18', machineId: 'M-007', jobId: 'JOB-008', label: 'JOB-008 [Metrology]', start: 145, end: 175, type: 'processing' },
-    { id: 'SB-19', machineId: 'M-007', jobId: 'JOB-002', label: 'JOB-002 [CMM Check]', start: 180, end: 200, type: 'processing' },
+    { id: 'SB-18', machineId: 'M-007', jobId: 'JOB-008', label: 'JOB-008 [Metrology]', start: 145, end: 175, type: 'processing', workerId: 'W-007', workerName: 'Karthik Iyer' },
+    { id: 'SB-19', machineId: 'M-007', jobId: 'JOB-002', label: 'JOB-002 [CMM Check]', start: 180, end: 200, type: 'processing', workerId: 'W-007', workerName: 'Karthik Iyer' },
 
-    { id: 'SB-20', machineId: 'M-008', label: 'Scheduled Maintenance', start: 0, end: 90, type: 'maintenance' },
-    { id: 'SB-21', machineId: 'M-008', jobId: 'JOB-003', label: 'JOB-003 [Cyl Grind - DELAYED]', start: 100, end: 145, type: 'processing', isDelayed: true },
+    { id: 'SB-20', machineId: 'M-008', label: 'Scheduled Maintenance', start: 0, end: 90, type: 'maintenance', workerId: 'W-001', workerName: 'Rajesh Sharma' },
+    { id: 'SB-21', machineId: 'M-008', jobId: 'JOB-003', label: 'JOB-003 [Cyl Grind - DELAYED]', start: 100, end: 145, type: 'processing', isDelayed: true, workerId: 'W-001', workerName: 'Rajesh Sharma' },
 
-    { id: 'SB-22', machineId: 'M-009', jobId: 'JOB-003', label: 'JOB-003 [Induction Hardening]', start: 155, end: 210, type: 'processing', isDelayed: true },
+    { id: 'SB-22', machineId: 'M-009', jobId: 'JOB-003', label: 'JOB-003 [Induction Hardening]', start: 155, end: 210, type: 'processing', isDelayed: true, workerId: 'W-008', workerName: 'Manoj Kumar' },
 
-    { id: 'SB-23', machineId: 'M-010', jobId: 'JOB-004', label: 'JOB-004 [Laser Cut]', start: 0, end: 20, type: 'processing' },
-    { id: 'SB-24', machineId: 'M-010', jobId: 'JOB-006', label: 'JOB-006 [Laser Shear]', start: 25, end: 45, type: 'processing' },
+    { id: 'SB-23', machineId: 'M-010', jobId: 'JOB-004', label: 'JOB-004 [Laser Cut]', start: 0, end: 20, type: 'processing', workerId: 'W-004', workerName: 'Sunita Rao' },
+    { id: 'SB-24', machineId: 'M-010', jobId: 'JOB-006', label: 'JOB-006 [Laser Shear]', start: 25, end: 45, type: 'processing', workerId: 'W-004', workerName: 'Sunita Rao' },
 
-    { id: 'SB-25', machineId: 'M-011', jobId: 'JOB-006', label: 'JOB-006 [Punch & Bend]', start: 50, end: 85, type: 'processing' },
+    { id: 'SB-25', machineId: 'M-011', jobId: 'JOB-006', label: 'JOB-006 [Punch & Bend]', start: 50, end: 85, type: 'processing', workerId: 'W-004', workerName: 'Sunita Rao' },
 
-    { id: 'SB-26', machineId: 'M-012', jobId: 'JOB-004', label: 'JOB-004 [TIG Seam Weld]', start: 45, end: 75, type: 'processing' },
+    { id: 'SB-26', machineId: 'M-012', jobId: 'JOB-004', label: 'JOB-004 [TIG Seam Weld]', start: 45, end: 75, type: 'processing', workerId: 'W-005', workerName: 'Vikram Singh' },
 
-    { id: 'SB-27', machineId: 'M-013', label: 'UNEXPECTED BREAKDOWN (Spindle Fault)', start: 60, end: 240, type: 'breakdown' },
-    { id: 'SB-28', machineId: 'M-013', jobId: 'JOB-007', label: 'JOB-007 [Wire EDM - BLOCKED]', start: 90, end: 210, type: 'processing', isDelayed: true }
+    { id: 'SB-27', machineId: 'M-013', label: 'UNEXPECTED BREAKDOWN (Spindle Fault)', start: 60, end: 240, type: 'breakdown', workerId: 'W-009', workerName: 'Sneha Reddy' },
+    { id: 'SB-28', machineId: 'M-013', jobId: 'JOB-007', label: 'JOB-007 [Wire EDM - BLOCKED]', start: 90, end: 210, type: 'processing', isDelayed: true, workerId: 'W-009', workerName: 'Sneha Reddy' }
   ],
 
   // Active Disruptions List
@@ -552,7 +566,13 @@ const RESCHEDULE_DATA = {
     peakElectricityTariff: 12.20,
     defaultAlgorithm: 'ReSchedule',
     recoveryBudgetSec: 5,
-    solverBackendUrl: 'http://localhost:8000/api'
+    solverBackendUrl: 'http://localhost:8000/api',
+    // Factory Resource Capacity & Disruption State
+    numWorkers: 10,
+    numMachines: 13,
+    absentWorkers: [],
+    brokenMachines: ['M-013'],
+    lastScheduleSummary: null
   }
 };
 
